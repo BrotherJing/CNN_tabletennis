@@ -40,7 +40,7 @@ if __name__ == '__main__':
 	else:
 
 		data = pd.read_csv(filename, delimiter=' ')
-		arr = data.as_matrix(['x1', 'y1', 'x2', 'y2'])
+		arr = data.as_matrix()
 		data = None
 		N, D = arr.shape
 

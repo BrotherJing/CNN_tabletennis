@@ -3,7 +3,6 @@ layer {
   name: "data"
   type: "Data"
   top: "data"
-  top: "my_cls_label"
   include {
     phase: TRAIN
   }
@@ -12,7 +11,7 @@ layer {
   }
   data_param {
     source: "data/train_data_lmdb"
-    batch_size: 64
+    batch_size: 4
     backend: LMDB
   }
 }
@@ -20,7 +19,6 @@ layer {
   name: "data"
   type: "Data"
   top: "data"
-  top: "my_cls_label"
   include {
     phase: TEST
   }
@@ -29,7 +27,39 @@ layer {
   }
   data_param {
     source: "data/val_data_lmdb"
-    batch_size: 64
+    batch_size: 4
+    backend: LMDB
+  }
+}
+layer {
+  name: "prob_map_gt"
+  type: "Data"
+  top: "prob_map_gt"
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+    scale: 0.00390625
+  }
+  data_param {
+    source: "data/train_label_lmdb"
+    batch_size: 4
+    backend: LMDB
+  }
+}
+layer {
+  name: "prob_map_gt"
+  type: "Data"
+  top: "prob_map_gt"
+  include {
+    phase: TEST
+  }
+  transform_param {
+    scale: 0.00390625
+  }
+  data_param {
+    source: "data/val_label_lmdb"
+    batch_size: 4
     backend: LMDB
   }
 }
@@ -180,12 +210,12 @@ layer {
   bottom: "conv3"
   top: "conv4"
   param {
-    lr_mult: 10
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   param {
-    lr_mult: 20
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   convolution_param {
     num_output: 384
@@ -213,12 +243,12 @@ layer {
   bottom: "conv4"
   top: "conv5"
   param {
-    lr_mult: 10
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   param {
-    lr_mult: 20
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   convolution_param {
     num_output: 256
@@ -252,10 +282,10 @@ layer {
   }
 }
 layer {
-  name: "my_fc6"
+  name: "sodlt_fc6"
   type: "InnerProduct"
   bottom: "pool5"
-  top: "my_fc6"
+  top: "sodlt_fc6"
   param {
     lr_mult: 5
     decay_mult: 1
@@ -278,23 +308,23 @@ layer {
 layer {
   name: "relu6"
   type: "ReLU"
-  bottom: "my_fc6"
-  top: "my_fc6"
+  bottom: "sodlt_fc6"
+  top: "sodlt_fc6"
 }
 layer {
   name: "drop6"
   type: "Dropout"
-  bottom: "my_fc6"
-  top: "my_fc6"
+  bottom: "sodlt_fc6"
+  top: "sodlt_fc6"
   dropout_param {
     dropout_ratio: 0.5
   }
 }
 layer {
-  name: "my_fc7"
+  name: "sodlt_fc7"
   type: "InnerProduct"
-  bottom: "my_fc6"
-  top: "my_fc7"
+  bottom: "sodlt_fc6"
+  top: "sodlt_fc7"
   param {
     lr_mult: 5
     decay_mult: 1
@@ -304,7 +334,7 @@ layer {
     decay_mult: 1
   }
   inner_product_param {
-    num_output: 4096
+    num_output: 1024
     weight_filler {
       type: "xavier"
     }
@@ -317,23 +347,23 @@ layer {
 layer {
   name: "relu7"
   type: "ReLU"
-  bottom: "my_fc7"
-  top: "my_fc7"
+  bottom: "sodlt_fc7"
+  top: "sodlt_fc7"
 }
 layer {
   name: "drop7"
   type: "Dropout"
-  bottom: "my_fc7"
-  top: "my_fc7"
+  bottom: "sodlt_fc7"
+  top: "sodlt_fc7"
   dropout_param {
     dropout_ratio: 0.5
   }
 }
 layer {
-  name: "my_fc8"
+  name: "sodlt_fc8"
   type: "InnerProduct"
-  bottom: "my_fc7"
-  top: "my_fc8"
+  bottom: "sodlt_fc7"
+  top: "sodlt_fc8"
   param {
     lr_mult: 5
     decay_mult: 1
@@ -343,7 +373,7 @@ layer {
     decay_mult: 1
   }
   inner_product_param {
-    num_output: 2
+    num_output: 2500
     weight_filler {
       type: "xavier"
     }
@@ -354,20 +384,24 @@ layer {
   }
 }
 layer {
-  name: "accuracy"
-  type: "Accuracy"
-  bottom: "my_fc8"
-  bottom: "my_cls_label"
-  top: "accuracy"
-  include {
-    phase: TEST
+  name: "sodlt"
+  type: "Reshape"
+  bottom: "sodlt_fc8"
+  top: "sodlt"
+  reshape_param{
+    shape{
+      dim: 0
+      dim: 1
+      dim: 50
+      dim: -1
+    }
   }
 }
 layer {
-  name: "my_loss_cls"
-  type: "SoftmaxWithLoss"
-  bottom: "my_fc8"
-  bottom: "my_cls_label"
-  top: "my_loss_cls"
+  name: "so_loss"
+  type: "SigmoidCrossEntropyLoss"
+  bottom: "sodlt"
+  bottom: "prob_map_gt"
+  top: "so_loss"
   loss_weight: 1
 }

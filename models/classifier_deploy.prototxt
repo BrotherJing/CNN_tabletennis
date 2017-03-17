@@ -7,8 +7,8 @@ layer {
     shape: { 
       dim: 1
       dim: 3
-      dim: 227
-      dim: 227
+      dim: 100
+      dim: 100
     } 
   }
 }
@@ -154,10 +154,10 @@ layer {
   top: "conv3"
 }
 layer {
-  name: "my_conv4"
+  name: "conv4"
   type: "Convolution"
   bottom: "conv3"
-  top: "my_conv4"
+  top: "conv4"
   param {
     lr_mult: 0
     decay_mult: 0
@@ -183,14 +183,14 @@ layer {
 layer {
   name: "relu4"
   type: "ReLU"
-  bottom: "my_conv4"
-  top: "my_conv4"
+  bottom: "conv4"
+  top: "conv4"
 }
 layer {
-  name: "my_conv5"
+  name: "conv5"
   type: "Convolution"
-  bottom: "my_conv4"
-  top: "my_conv5"
+  bottom: "conv4"
+  top: "conv5"
   param {
     lr_mult: 0
     decay_mult: 0
@@ -216,13 +216,13 @@ layer {
 layer {
   name: "relu5"
   type: "ReLU"
-  bottom: "my_conv5"
-  top: "my_conv5"
+  bottom: "conv5"
+  top: "conv5"
 }
 layer {
   name: "pool5"
   type: "Pooling"
-  bottom: "my_conv5"
+  bottom: "conv5"
   top: "pool5"
   pooling_param {
     pool: MAX

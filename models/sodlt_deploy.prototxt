@@ -1,36 +1,15 @@
 name: "CaffeNet"
 layer {
   name: "data"
-  type: "Data"
+  type: "Input"
   top: "data"
-  top: "my_cls_label"
-  include {
-    phase: TRAIN
-  }
-  transform_param {
-    mean_file: "data/mean.binaryproto"
-  }
-  data_param {
-    source: "data/train_data_lmdb"
-    batch_size: 64
-    backend: LMDB
-  }
-}
-layer {
-  name: "data"
-  type: "Data"
-  top: "data"
-  top: "my_cls_label"
-  include {
-    phase: TEST
-  }
-  transform_param {
-    mean_file: "data/mean.binaryproto"
-  }
-  data_param {
-    source: "data/val_data_lmdb"
-    batch_size: 64
-    backend: LMDB
+  input_param { 
+    shape: { 
+      dim: 1
+      dim: 3
+      dim: 100
+      dim: 100
+    } 
   }
 }
 layer {
@@ -252,10 +231,10 @@ layer {
   }
 }
 layer {
-  name: "my_fc6"
+  name: "sodlt_fc6"
   type: "InnerProduct"
   bottom: "pool5"
-  top: "my_fc6"
+  top: "sodlt_fc6"
   param {
     lr_mult: 5
     decay_mult: 1
@@ -278,23 +257,23 @@ layer {
 layer {
   name: "relu6"
   type: "ReLU"
-  bottom: "my_fc6"
-  top: "my_fc6"
+  bottom: "sodlt_fc6"
+  top: "sodlt_fc6"
 }
 layer {
   name: "drop6"
   type: "Dropout"
-  bottom: "my_fc6"
-  top: "my_fc6"
+  bottom: "sodlt_fc6"
+  top: "sodlt_fc6"
   dropout_param {
     dropout_ratio: 0.5
   }
 }
 layer {
-  name: "my_fc7"
+  name: "sodlt_fc7"
   type: "InnerProduct"
-  bottom: "my_fc6"
-  top: "my_fc7"
+  bottom: "sodlt_fc6"
+  top: "sodlt_fc7"
   param {
     lr_mult: 5
     decay_mult: 1
@@ -304,7 +283,7 @@ layer {
     decay_mult: 1
   }
   inner_product_param {
-    num_output: 4096
+    num_output: 1024
     weight_filler {
       type: "xavier"
     }
@@ -317,23 +296,23 @@ layer {
 layer {
   name: "relu7"
   type: "ReLU"
-  bottom: "my_fc7"
-  top: "my_fc7"
+  bottom: "sodlt_fc7"
+  top: "sodlt_fc7"
 }
 layer {
   name: "drop7"
   type: "Dropout"
-  bottom: "my_fc7"
-  top: "my_fc7"
+  bottom: "sodlt_fc7"
+  top: "sodlt_fc7"
   dropout_param {
     dropout_ratio: 0.5
   }
 }
 layer {
-  name: "my_fc8"
+  name: "sodlt_fc8"
   type: "InnerProduct"
-  bottom: "my_fc7"
-  top: "my_fc8"
+  bottom: "sodlt_fc7"
+  top: "sodlt_fc8"
   param {
     lr_mult: 5
     decay_mult: 1
@@ -343,7 +322,7 @@ layer {
     decay_mult: 1
   }
   inner_product_param {
-    num_output: 2
+    num_output: 2500
     weight_filler {
       type: "xavier"
     }
@@ -354,20 +333,16 @@ layer {
   }
 }
 layer {
-  name: "accuracy"
-  type: "Accuracy"
-  bottom: "my_fc8"
-  bottom: "my_cls_label"
-  top: "accuracy"
-  include {
-    phase: TEST
+  name: "sodlt"
+  type: "Reshape"
+  bottom: "sodlt_fc8"
+  top: "sodlt"
+  reshape_param{
+    shape{
+      dim: 0
+      dim: 1
+      dim: 50
+      dim: -1
+    }
   }
-}
-layer {
-  name: "my_loss_cls"
-  type: "SoftmaxWithLoss"
-  bottom: "my_fc8"
-  bottom: "my_cls_label"
-  top: "my_loss_cls"
-  loss_weight: 1
 }
