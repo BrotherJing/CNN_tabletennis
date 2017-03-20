@@ -346,3 +346,9 @@ layer {
     }
   }
 }
+layer {
+  name: "sodlt_norm"
+  type: "Sigmoid"
+  bottom: "sodlt"
+  top: "sodlt_norm"
+}
