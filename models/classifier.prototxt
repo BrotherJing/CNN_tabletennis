@@ -12,7 +12,7 @@ layer {
   }
   data_param {
     source: "data/train_data_lmdb"
-    batch_size: 64
+    batch_size: 16
     backend: LMDB
   }
 }
@@ -29,7 +29,7 @@ layer {
   }
   data_param {
     source: "data/val_data_lmdb"
-    batch_size: 64
+    batch_size: 16
     backend: LMDB
   }
 }
