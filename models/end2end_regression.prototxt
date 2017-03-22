@@ -1,15 +1,67 @@
 name: "CaffeNet"
 layer {
   name: "data"
-  type: "Input"
+  type: "Data"
   top: "data"
-  input_param { 
-    shape: { 
-      dim: 1
-      dim: 3
-      dim: 100
-      dim: 100
-    } 
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+    mean_file: "data/mean.binaryproto"
+  }
+  data_param {
+    #source: "data/train_data_lmdb"
+    source: "/media/jing/0C4F0EAC0C4F0EAC/project/tabletennis/train_regress_data_lmdb"
+    batch_size: 4
+    backend: LMDB
+  }
+}
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  include {
+    phase: TEST
+  }
+  transform_param {
+    mean_file: "data/mean.binaryproto"
+  }
+  data_param {
+    source: "/media/jing/0C4F0EAC0C4F0EAC/project/tabletennis/val_regress_data_lmdb"
+    batch_size: 4
+    backend: LMDB
+  }
+}
+layer {
+  name: "my_bbox_label"
+  type: "Data"
+  top: "my_bbox_label"
+  include {
+    phase: TRAIN
+  }
+  #transform_param {
+  #  scale: 0.004405286
+  #}
+  data_param {
+    source: "/media/jing/0C4F0EAC0C4F0EAC/project/tabletennis/train_regress_label_lmdb"
+    batch_size: 4
+    backend: LMDB
+  }
+}
+layer {
+  name: "my_bbox_label"
+  type: "Data"
+  top: "my_bbox_label"
+  include {
+    phase: TEST
+  }
+  #transform_param {
+  #  scale: 0.004405286
+  #}
+  data_param {
+    source: "/media/jing/0C4F0EAC0C4F0EAC/project/tabletennis/val_regress_label_lmdb"
+    batch_size: 4
+    backend: LMDB
   }
 }
 layer {
@@ -159,12 +211,12 @@ layer {
   bottom: "conv3"
   top: "conv4"
   param {
-    lr_mult: 10
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   param {
-    lr_mult: 20
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   convolution_param {
     num_output: 384
@@ -192,12 +244,12 @@ layer {
   bottom: "conv4"
   top: "conv5"
   param {
-    lr_mult: 10
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   param {
-    lr_mult: 20
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   convolution_param {
     num_output: 256
@@ -235,12 +287,12 @@ layer {
   bottom: "pool5"
   top: "sodlt_fc6"
   param {
-    lr_mult: 5
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   param {
-    lr_mult: 10
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   inner_product_param {
     num_output: 4096
@@ -274,12 +326,12 @@ layer {
   bottom: "sodlt_fc6"
   top: "sodlt_fc7"
   param {
-    lr_mult: 5
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   param {
-    lr_mult: 10
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   inner_product_param {
     num_output: 1024
@@ -313,12 +365,12 @@ layer {
   bottom: "sodlt_fc7"
   top: "sodlt_fc8"
   param {
-    lr_mult: 5
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   param {
-    lr_mult: 10
-    decay_mult: 1
+    lr_mult: 0
+    decay_mult: 0
   }
   inner_product_param {
     num_output: 2500
@@ -355,10 +407,143 @@ layer{
   type: "Python"
   name: "cut_roi"
   top: "roi"
-  top: "prob_max"
+  #top: "prob_max"
   bottom: "sodlt_norm"
   python_param{
     module: "cut_roi_layer.layer"
     layer: "CutROILayer"
   }
+}
+layer{
+  type: "ROIPooling"
+  name: "roi_pool"
+  bottom: "conv1"
+  bottom: "roi"
+  top: "roi_pool"
+  roi_pooling_param{
+    pooled_w: 7
+    pooled_h: 7
+    spatial_scale: 0.46 #23/50
+  }
+}
+layer {
+  name: "regress_fc6"
+  type: "InnerProduct"
+  bottom: "roi_pool"
+  top: "regress_fc6"
+  param {
+    lr_mult: 5
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  inner_product_param {
+    num_output: 4096
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 1
+    }
+  }
+}
+layer {
+  name: "regress_relu6"
+  type: "ReLU"
+  bottom: "regress_fc6"
+  top: "regress_fc6"
+}
+layer {
+  name: "regress_drop6"
+  type: "Dropout"
+  bottom: "regress_fc6"
+  top: "regress_fc6"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: "regress_fc7"
+  type: "InnerProduct"
+  bottom: "regress_fc6"
+  top: "regress_fc7"
+  param {
+    lr_mult: 5
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  inner_product_param {
+    num_output: 1024
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 1
+    }
+  }
+}
+layer {
+  name: "regress_relu7"
+  type: "ReLU"
+  bottom: "regress_fc7"
+  top: "regress_fc7"
+}
+layer {
+  name: "regress_drop7"
+  type: "Dropout"
+  bottom: "regress_fc7"
+  top: "regress_fc7"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: "regress_fc8"
+  type: "InnerProduct"
+  bottom: "regress_fc7"
+  top: "regress_fc8"
+  param {
+    lr_mult: 5
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  inner_product_param {
+    num_output: 4
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer{
+  name: "bbox_gt"
+  bottom: "roi"
+  bottom: "my_bbox_label"
+  top: "bbox_gt"
+  type: "Python"
+  python_param{
+    module: "cut_roi_layer.bbox_transform_layer"
+    layer: "BBoxTransformLayer"
+  }
+}
+layer{
+  name: "loss_bbox"
+  type: "SmoothL1Loss"
+  bottom: "regress_fc8"
+  bottom: "bbox_gt"
+  top: "loss_bbox"
+  loss_weight: 1
 }

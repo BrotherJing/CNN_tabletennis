@@ -30,7 +30,7 @@ if __name__ == '__main__':
 				datum = caffe.proto.caffe_pb2.Datum()
 				datum.ParseFromString(value)
 				print datum.channels, datum.height, datum.width
-				flat_x = np.fromstring(datum.data)
+				flat_x = caffe.io.datum_to_array(datum)
 				print flat_x.shape
 				x = flat_x.reshape(datum.channels, datum.height, datum.width)
 				y = datum.label

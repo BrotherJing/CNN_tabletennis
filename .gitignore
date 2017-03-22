@@ -5,3 +5,5 @@ build/*
 *.solverstate
 
 .ipynb_checkpoints/*
+
+*.pyc
