@@ -355,7 +355,7 @@ layer{
   type: "Python"
   name: "cut_roi"
   top: "roi"
-  top: "prob_max"
+  #top: "prob_max"
   bottom: "sodlt_norm"
   python_param{
     module: "cut_roi_layer.layer"

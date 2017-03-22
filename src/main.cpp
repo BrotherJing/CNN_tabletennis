@@ -31,38 +31,11 @@ CvRect run_avg(CvRect last, CvRect current){
 }
 
 CvRect get_bbox(Mat prediction, CvRect context){
-	IplImage prob_map = prediction;
-
-	static CvMemStorage *mem_storage = NULL;
-	static IplImage *map_copy = NULL;
-	static CvSeq *contours;
-	if(mem_storage==NULL){
-		map_copy = cvCreateImage(cvGetSize(&prob_map), IPL_DEPTH_8U, 1);
-		mem_storage = cvCreateMemStorage(0);
-	}else{
-		cvClearMemStorage(mem_storage);
-	}
-	CvRect bbox, mid_bbox;
-	CvPoint center;
-	double max_prob, min_prob;
-	cvMinMaxLoc(&prob_map, &min_prob, &max_prob);
-	cout<<"max prob:"<<max_prob<<endl;
-	for(int i=1;i<4;++i){
-		double t = max_prob*i/4;
-		cvThreshold(&prob_map, map_copy, t, 255, CV_THRESH_BINARY);
-		cvFindContours(map_copy, mem_storage, &contours, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-		if(contours!=NULL){
-			bbox = cvBoundingRect(contours);
-			if(i==3)mid_bbox = bbox;
-		}
-	}
-	center = cvPoint(bbox.x+bbox.width/2, bbox.y+bbox.height/2);
-	cvCircle(&prob_map, center, 1, CV_RGB(0xff, 0xff, 0xff), 1);
-	bbox = cvRect(center.x - mid_bbox.width/2,
-		center.y - mid_bbox.height/2,
-		mid_bbox.width,
-		mid_bbox.height);
-	cvShowImage("prob_map", &prob_map);
+	CvRect bbox;
+	bbox = cvRect(prediction.at<float>(0,0),
+		prediction.at<float>(0,1),
+		prediction.at<float>(0,2) - prediction.at<float>(0,0),
+		prediction.at<float>(0,3) - prediction.at<float>(0,1));
 	double ratio_w = 2*context.width*1.0/100;
 	double ratio_h = 2*context.height*1.0/100;
 	bbox.x = context.x + bbox.x * ratio_w;
@@ -80,8 +53,8 @@ int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
 		CV_MAT_ELEM(*init_bbox_mat, int, 0, 2),
 		CV_MAT_ELEM(*init_bbox_mat, int, 0, 3));
 	int longer_edge = bbox.width>bbox.height?bbox.width:bbox.height;
-	int padding_left = longer_edge*1.5;
-	int padding_top = longer_edge*1.5;
+	int padding_left = longer_edge*1.;
+	int padding_top = longer_edge*1.;
 	CvRect context = cvRect(bbox.x - padding_left,
 		bbox.y - padding_top,
 		bbox.width + padding_left*2,
@@ -109,12 +82,12 @@ int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
 		cvWaitKey(0);
 
 		Mat patch_mat(patch);
-		Mat prediction = classifier.Predict(patch_mat);
+		Mat prediction = classifier.Predict(patch_mat);//the prediction is a bbox
 		CvRect new_bbox = get_bbox(prediction, context);
 		bbox = run_avg(bbox, new_bbox);
 		longer_edge = bbox.width>bbox.height?bbox.width:bbox.height;
-		padding_left = longer_edge*1.5;
-		padding_top = longer_edge*1.5;
+		padding_left = longer_edge*1.;
+		padding_top = longer_edge*1.;
 		context.x = bbox.x - padding_left;
 		context.y = bbox.y - padding_top;
 		context.width = bbox.width + padding_left*2;
