@@ -4,7 +4,7 @@
 #include "NNTracker.h"
 #include "Classifier.h"
 
-#define TIMING
+//#define TIMING
 
 NNTracker::NNTracker(Classifier &classifier):
 	classifier(classifier){
