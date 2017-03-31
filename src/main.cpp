@@ -108,8 +108,12 @@ int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
 #endif
 
 		Mat patch_mat(patch);
-		Mat prediction = classifier.Predict(patch_mat);
-		CvRect bbox_proposal = get_bbox(prediction, context);
+		Mat imgs[1], probs[1], bboxes[1];
+		imgs[0] = patch_mat;
+		classifier.PredictN(imgs, 1, probs, bboxes);
+		CvRect bbox_proposal = get_bbox(bboxes[0], context);
+		//Mat prediction = classifier.Predict(patch_mat);
+		//CvRect bbox_proposal = get_bbox(prediction, context);
 		bbox = run_avg(bbox, bbox_proposal);
 
 		//update context
@@ -122,6 +126,7 @@ int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
 		context.height = bbox.height + padding_top*2;
 
 #ifdef DEBUG_MODE
+		printf("probability %f\n", probs[0].at<float>(0,0));
 		printf("bbox %d %d %d %d\n", bbox.x, bbox.y, bbox.width, bbox.height);
 		cvRectangle(frame, cvPoint(bbox.x, bbox.y),
 			cvPoint(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0xff, 0x00, 0x00), 1, CV_AA);
