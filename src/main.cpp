@@ -19,6 +19,7 @@ input:
 
 #include "main.h"
 #include "Classifier.h"
+#include "NNTracker.h"
 
 const double LOW_PASS_FILTER = 0.9;
 
@@ -27,19 +28,19 @@ const double LOW_PASS_FILTER = 0.9;
 	long tv_usec;
 };*/
 
-CvRect run_avg(CvRect last, CvRect current){
+Rect run_avg(Rect last, Rect current){
 	int new_width = int(last.width*LOW_PASS_FILTER + current.width*(1 - LOW_PASS_FILTER));
 	int new_height = int(last.height*LOW_PASS_FILTER + current.height*(1 - LOW_PASS_FILTER));
 	//int new_width = last.width;
 	//int new_height = last.height;
 	int center_x = current.x + current.width/2;
 	int center_y = current.y + current.height/2;
-	return cvRect(center_x - new_width/2, center_y - new_height/2, new_width, new_height);
+	return Rect(center_x - new_width/2, center_y - new_height/2, new_width, new_height);
 }
 
-CvRect get_bbox(Mat prediction, CvRect context){
-	CvRect bbox;
-	bbox = cvRect(prediction.at<float>(0,0),
+Rect get_bbox(Mat prediction, Rect context){
+	Rect bbox;
+	bbox = Rect(prediction.at<float>(0,0),
 		prediction.at<float>(0,1),
 		prediction.at<float>(0,2) - prediction.at<float>(0,0),
 		prediction.at<float>(0,3) - prediction.at<float>(0,1));
@@ -52,13 +53,12 @@ CvRect get_bbox(Mat prediction, CvRect context){
 	return bbox;
 }
 
-int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
+int track(VideoCapture &video, CvMat *init_bbox_mat, Classifier &classifier){
 
-	IplImage *frame = cvQueryFrame(video);
-	if(!frame)return -1;
+	Mat frame;
 
 	//the bounding box of the object in every frame
-	CvRect bbox = cvRect(CV_MAT_ELEM(*init_bbox_mat, int, 0, 0),
+	Rect bbox = Rect(CV_MAT_ELEM(*init_bbox_mat, int, 0, 0),
 		CV_MAT_ELEM(*init_bbox_mat, int, 0, 1),
 		CV_MAT_ELEM(*init_bbox_mat, int, 0, 2),
 		CV_MAT_ELEM(*init_bbox_mat, int, 0, 3));
@@ -68,13 +68,13 @@ int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
 	int padding_top = longer_edge*1.;
 
 	//the area to crop from the frame
-	CvRect context = cvRect(bbox.x - padding_left,
+	Rect context = Rect(bbox.x - padding_left,
 		bbox.y - padding_top,
 		bbox.width + padding_left*2,
 		bbox.height + padding_top*2);
 
 	//input image to the network
-	IplImage *patch = cvCreateImage(cvSize(100, 100), frame->depth, frame->nChannels);
+	//Mat patch(Size(100, 100), frame.type());
 
 #ifdef DEBUG_MODE
 	namedWindow("display", WINDOW_AUTOSIZE);
@@ -90,30 +90,27 @@ int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
 		gettimeofday(&t1,NULL);
 #endif
 		
-		frame = cvQueryFrame(video);
-		if(!frame)return 0;
+		video >> frame;
+		if(frame.empty())return 0;
 
 		//crop the context in last frame
-		cvSetImageROI(frame, context);
-		cvResize(frame, patch);
-		cvResetImageROI(frame);
+		Mat patch = frame(context);
+		//cv::resize(roi, patch, patch.size());
 
 #ifdef DEBUG_MODE
-		cvRectangle(frame, cvPoint(bbox.x, bbox.y),
-			cvPoint(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0x66, 0x00, 0x00), 1, CV_AA);
-		cvRectangle(frame, cvPoint(context.x, context.y),
-			cvPoint(context.x+context.width, context.y+context.height), CV_RGB(0x66, 0x00, 0x00), 1, CV_AA);
-		cvShowImage("display", frame);
-		cvWaitKey(0);
+		/*rectangle(frame, Point(bbox.x, bbox.y),
+			Point(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0x66, 0x00, 0x00), 1, CV_AA);
+		rectangle(frame, Point(context.x, context.y),
+			Point(context.x+context.width, context.y+context.height), CV_RGB(0x66, 0x00, 0x00), 1, CV_AA);*/
+		imshow("display", frame);
+		waitKey(0);
 #endif
 
-		Mat patch_mat(patch);
 		Mat imgs[1], probs[1], bboxes[1];
-		imgs[0] = patch_mat;
+		imgs[0] = patch;
+		printf("context: %d %d %d %d\n", context.x, context.y, context.width, context.height);
 		classifier.PredictN(imgs, 1, probs, bboxes);
-		CvRect bbox_proposal = get_bbox(bboxes[0], context);
-		//Mat prediction = classifier.Predict(patch_mat);
-		//CvRect bbox_proposal = get_bbox(prediction, context);
+		Rect bbox_proposal = get_bbox(bboxes[0], context);
 		bbox = run_avg(bbox, bbox_proposal);
 
 		//update context
@@ -127,16 +124,16 @@ int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
 
 #ifdef DEBUG_MODE
 		printf("probability %f\n", probs[0].at<float>(0,0));
-		printf("bbox %d %d %d %d\n", bbox.x, bbox.y, bbox.width, bbox.height);
-		cvRectangle(frame, cvPoint(bbox.x, bbox.y),
-			cvPoint(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0xff, 0x00, 0x00), 1, CV_AA);
-		cvRectangle(frame, cvPoint(context.x, context.y),
-			cvPoint(context.x+context.width, context.y+context.height), CV_RGB(0xff, 0x00, 0x00), 1, CV_AA);
-		cvShowImage("display", frame);
-		cvShowImage("patch", patch);
-		char c = cvWaitKey(0);
+		printf("bbox: %d %d %d %d\n", bbox.x, bbox.y, bbox.width, bbox.height);
+		rectangle(frame, Point(bbox.x, bbox.y),
+			Point(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0xff, 0x00, 0x00), 1, CV_AA);
+		/*rectangle(frame, Point(context.x, context.y),
+			Point(context.x+context.width, context.y+context.height), CV_RGB(0xff, 0x00, 0x00), 1, CV_AA);*/
+		imshow("display", frame);
+		imshow("patch", patch);
+		char c = waitKey(0);
 		if(c=='s'){
-			cvSaveImage("patch.jpg", patch);
+			imwrite("patch.jpg", patch);
 		}else if(c==27)break;
 #endif
 
@@ -148,9 +145,9 @@ int track(CvCapture *video, CvMat *init_bbox_mat, Classifier &classifier){
 	}
 
 #ifdef DEBUG_MODE
-	cvDestroyWindow("display");
-	cvDestroyWindow("patch");
-	cvDestroyWindow("prob_map");
+	destroyWindow("display");
+	destroyWindow("patch");
+	destroyWindow("prob_map");
 #endif
 }
 
@@ -164,11 +161,37 @@ int main(int argc, char **argv){
 
 	Classifier classifier(proto_path, weights_path, mean_path);
 
-	CvCapture *video = cvCreateFileCapture(video_path.c_str());
+	VideoCapture video(video_path);
 
 	CvMat *init_bbox = (CvMat*)cvLoad(init_bbox_path.c_str());
 
-	track(video, init_bbox, classifier);
+	//track(video, init_bbox, classifier);
+
+	//use the NNTracker class
+	NNTracker tracker(classifier);
+	Rect proposals[1];
+	proposals[0] = Rect(CV_MAT_ELEM(*init_bbox, int, 0, 0),
+		CV_MAT_ELEM(*init_bbox, int, 0, 1),
+		CV_MAT_ELEM(*init_bbox, int, 0, 2),
+		CV_MAT_ELEM(*init_bbox, int, 0, 3));
+	float prob;
+	Rect bbox = Rect(0,0,0,0);
+
+	namedWindow("display", WINDOW_AUTOSIZE);
+	while(true){
+		Mat frame;
+		video>>frame;
+		if(frame.empty())break;
+		tracker.track(frame, proposals, 1, &prob, &bbox);
+#ifdef DEBUG_MODE
+		rectangle(frame, Point(bbox.x, bbox.y),
+			Point(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0xff, 0x00, 0x00), 1, CV_AA);
+		imshow("display", frame);
+		char c = waitKey(0);
+		if(c==27)break;
+#endif
+	}
+	destroyWindow("display");
 
 	return 0;
 }

@@ -116,7 +116,7 @@ void Classifier::PreprocessN(const cv::Mat *imgs, int num_imgs, std::vector<cv::
     /* This operation will write the separate BGR planes directly to the
      * input layer of the network because it is wrapped by the cv::Mat
      * objects in input_channels. */
-    cv::split(sample_normalized, *(input_channels+i*num_channels_));
+    cv::split(sample_normalized, &((*input_channels)[i*3]));
 
     CHECK(reinterpret_cast<float*>(input_channels->at(0).data)
           == net_->input_blobs()[0]->cpu_data())

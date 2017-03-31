@@ -1,6 +1,8 @@
 #ifndef HEADER_CLASSIFIER
 #define HEADER_CLASSIFIER
 
+#include <caffe/caffe.hpp>
+
 using namespace caffe;
 using namespace cv;
 using namespace std;
