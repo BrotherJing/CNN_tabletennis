@@ -4,7 +4,7 @@
 #include "NNTracker.h"
 #include "Classifier.h"
 
-//#define TIMING
+const double NNTracker::LOW_PASS_FILTER = 0.85;
 
 NNTracker::NNTracker(Classifier &classifier):
 	classifier(classifier){
@@ -19,10 +19,10 @@ NNTracker::NNTracker(Classifier &classifier):
 }
 
 NNTracker::~NNTracker(){
-	delete [] patches;
-	delete [] bboxes;
-	delete [] probs;
-	delete [] contexts;
+	delete patches;
+	delete bboxes;
+	delete probs;
+	delete contexts;
 }
 
 Rect NNTracker::running_avg(Rect last, Rect current){
@@ -75,12 +75,7 @@ bool NNTracker::track(Mat &frame, Rect *proposals, int num_proposals, float *out
 		patches[num_proposals] = frame(contexts[num_proposals]);
 		num_proposals++;
 	}
-
-#ifdef TIMING
-	struct timeval t1,t2;
-	double timeuse;
-	gettimeofday(&t1,NULL);
-#endif
+	if(num_proposals==0)return false;
 
 	classifier.PredictN(patches, num_proposals, probs, bboxes);
 
@@ -102,12 +97,6 @@ bool NNTracker::track(Mat &frame, Rect *proposals, int num_proposals, float *out
 	}
 	*output_prob = max_prob;
 	*output_bbox = bbox_last;
-
-#ifdef TIMING
-	gettimeofday(&t2,NULL);
-	timeuse = (t2.tv_sec - t1.tv_sec)*1000.0 + (t2.tv_usec - t1.tv_usec)/1000.0;
-	printf("Use Time:%fms\n",timeuse);
-#endif
 
 	return true;
 }

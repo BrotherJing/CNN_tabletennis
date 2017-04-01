@@ -7,6 +7,8 @@ find_path(TRACKER_INCLUDE_DIR
 	
 include_directories(${TRACKER_INCLUDE_DIR})
 
+include_directories(/home/jing/caffe/build_cmake2/include)
+
 add_library(tracker SHARED NNTracker.cpp Classifier.cpp)
 target_link_libraries(tracker ${OpenCV_LIBS} ${Caffe_LIBRARIES})
 

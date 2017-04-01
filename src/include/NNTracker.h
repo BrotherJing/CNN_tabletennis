@@ -3,6 +3,8 @@
 
 #include "Classifier.h"
 
+using namespace cv;
+
 class NNTracker
 {
 public:
@@ -15,7 +17,7 @@ public:
 	~NNTracker();
 	
 private:
-	static const double LOW_PASS_FILTER = 0.85;
+	static const double LOW_PASS_FILTER;
 
 	Rect get_context(Rect &bbox, float padding_ratio=1.0);
 

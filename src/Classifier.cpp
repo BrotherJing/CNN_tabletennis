@@ -1,10 +1,6 @@
 #include <caffe/caffe.hpp>
 #include <cstdio>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <string>
 #include <vector>
 #include "Classifier.h"
 

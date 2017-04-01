@@ -7,15 +7,8 @@ input:
 - initial bounding box(1*4 CvMat xml)
 */
 
-#include <caffe/caffe.hpp>
 #include <cstdio>
-#include <cmath>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <string>
-#include <vector>
 
 #include "main.h"
 #include "Classifier.h"
@@ -177,12 +170,23 @@ int main(int argc, char **argv){
 	float prob;
 	Rect bbox = Rect(0,0,0,0);
 
+	struct timeval t1,t2;
+	double timeuse;
 	namedWindow("display", WINDOW_AUTOSIZE);
 	while(true){
 		Mat frame;
 		video>>frame;
 		if(frame.empty())break;
+#ifdef TIMING
+		gettimeofday(&t1,NULL);
+#endif
 		tracker.track(frame, proposals, 1, &prob, &bbox);
+#ifdef TIMING
+		gettimeofday(&t2,NULL);
+		timeuse = (t2.tv_sec - t1.tv_sec)*1000.0 + (t2.tv_usec - t1.tv_usec)/1000.0;
+		printf("Use Time:%fms\n",timeuse);
+#endif
+
 #ifdef DEBUG_MODE
 		rectangle(frame, Point(bbox.x, bbox.y),
 			Point(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0xff, 0x00, 0x00), 1, CV_AA);

@@ -1,11 +1,9 @@
 #ifndef HEADER_CLASSIFIER
 #define HEADER_CLASSIFIER
 
-#include <caffe/caffe.hpp>
+#include "caffe/caffe.hpp"
 
 using namespace caffe;
-using namespace cv;
-using namespace std;
 
 class Classifier{
 public:
@@ -26,7 +24,7 @@ private:
 	void PreprocessN(const cv::Mat *imgs, 
 		int num_imgs, std::vector<cv::Mat>* input_channels);
 
-	shared_ptr< Net<float> > net_;
+	caffe::shared_ptr< Net<float> > net_;
 	cv::Size input_geometry_;
 	int num_channels_;
 	int num_batches_;
