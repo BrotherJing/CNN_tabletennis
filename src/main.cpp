@@ -90,7 +90,7 @@ int track(VideoCapture &video, CvMat *init_bbox_mat, Classifier &classifier){
 		Mat patch = frame(context);
 		//cv::resize(roi, patch, patch.size());
 
-#ifdef DEBUG_MODE
+#ifdef TRACK_DEBUG_MODE
 		/*rectangle(frame, Point(bbox.x, bbox.y),
 			Point(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0x66, 0x00, 0x00), 1, CV_AA);
 		rectangle(frame, Point(context.x, context.y),
@@ -115,7 +115,7 @@ int track(VideoCapture &video, CvMat *init_bbox_mat, Classifier &classifier){
 		context.width = bbox.width + padding_left*2;
 		context.height = bbox.height + padding_top*2;
 
-#ifdef DEBUG_MODE
+#ifdef TRACK_DEBUG_MODE
 		printf("probability %f\n", probs[0].at<float>(0,0));
 		printf("bbox: %d %d %d %d\n", bbox.x, bbox.y, bbox.width, bbox.height);
 		rectangle(frame, Point(bbox.x, bbox.y),
@@ -137,7 +137,7 @@ int track(VideoCapture &video, CvMat *init_bbox_mat, Classifier &classifier){
 #endif
 	}
 
-#ifdef DEBUG_MODE
+#ifdef TRACK_DEBUG_MODE
 	destroyWindow("display");
 	destroyWindow("patch");
 	destroyWindow("prob_map");
@@ -187,7 +187,7 @@ int main(int argc, char **argv){
 		printf("Use Time:%fms\n",timeuse);
 #endif
 
-#ifdef DEBUG_MODE
+#ifdef TRACK_DEBUG_MODE
 		rectangle(frame, Point(bbox.x, bbox.y),
 			Point(bbox.x+bbox.width, bbox.y+bbox.height), CV_RGB(0xff, 0x00, 0x00), 1, CV_AA);
 		imshow("display", frame);

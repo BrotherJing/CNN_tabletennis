@@ -19,10 +19,6 @@ NNTracker::NNTracker(Classifier &classifier):
 }
 
 NNTracker::~NNTracker(){
-	delete patches;
-	delete bboxes;
-	delete probs;
-	delete contexts;
 }
 
 Rect NNTracker::running_avg(Rect last, Rect current){
@@ -63,26 +59,39 @@ Rect NNTracker::get_context(Rect &bbox, float padding_ratio){
 bool NNTracker::track(Mat &frame, Rect *proposals, int num_proposals, float *output_prob, Rect *output_bbox){
 
 	//we want to add the context from last frame to be a proposal..
-	num_proposals = (num_proposals>max_proposal_-1)?max_proposal_-1:num_proposals;
+	//num_proposals = (num_proposals>max_proposal_-1)?max_proposal_-1:num_proposals;
+	int num_patches = 0;
 
-	for(int i=0;i<num_proposals;++i){
-		contexts[i] = get_context(proposals[i], 0.6);
-		//input image to the network
-		patches[i] = frame(contexts[i]);
-	}
 	if(bbox_last.width!=0){
-		contexts[num_proposals] = get_context(bbox_last);
-		patches[num_proposals] = frame(contexts[num_proposals]);
-		num_proposals++;
+		contexts[num_patches] = get_context(bbox_last);
+		if(contexts[num_patches].x<0||contexts[num_patches].y<0||
+			contexts[num_patches].x+contexts[num_patches].width>frame.cols||
+			contexts[num_patches].y+contexts[num_patches].height>frame.rows){
+		}else{
+			patches[num_patches] = frame(contexts[num_patches]);
+			num_patches++;
+		}
 	}
-	if(num_proposals==0)return false;
+	for(int i=0;i<num_proposals;++i){
+		if(num_patches>=max_proposal_)break;
+		contexts[num_patches] = get_context(proposals[i], 0.6);
+		if(contexts[num_patches].x<0||contexts[num_patches].y<0||
+			contexts[num_patches].x+contexts[num_patches].width>frame.cols||
+			contexts[num_patches].y+contexts[num_patches].height>frame.rows){
+		}else{
+			patches[num_patches] = frame(contexts[num_patches]);
+			num_patches++;
+		}
+		//input image to the network
+	}
+	if(num_patches==0)return false;
 
-	classifier.PredictN(patches, num_proposals, probs, bboxes);
+	classifier.PredictN(patches, num_patches, probs, bboxes);
 
 	//find the best one
 	float max_prob = 0;
 	int max_prob_idx = 0;
-	for(int i=0;i<num_proposals;++i){
+	for(int i=0;i<num_patches;++i){
 		if(probs[i].at<float>(0,0)>max_prob){
 			max_prob = probs[i].at<float>(0,0);
 			max_prob_idx = i;

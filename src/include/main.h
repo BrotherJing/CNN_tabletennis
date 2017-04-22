@@ -1,7 +1,7 @@
 #ifndef HEADER_MAIN
 #define HEADER_MAIN
 
-//#define DEBUG_MODE
+//#define TRACK_DEBUG_MODE
 #define TIMING
 
 #endif
