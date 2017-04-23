@@ -9,12 +9,16 @@ const double NNTracker::LOW_PASS_FILTER = 0.85;
 NNTracker::NNTracker(Classifier &classifier):
 	classifier(classifier){
 	max_proposal_ = 4;
+	prob_thresh = 0.0f;
+	proposal_range = -1;
+
+	last_found = false;
+
 	patches = new Mat[max_proposal_];
 	bboxes = new Mat[max_proposal_];
 	probs = new Mat[max_proposal_];
 
 	contexts = new Rect[max_proposal_];
-
 	bbox_last = Rect(0,0,0,0);
 }
 
@@ -56,13 +60,49 @@ Rect NNTracker::get_context(Rect &bbox, float padding_ratio){
 		bbox.height + padding_top*2);
 }
 
+bool NNTracker::track_vec(Mat &frame, std::vector<Rect> &proposals, float *output_prob, Rect *output_bbox){
+	int num_patches = 0;
+
+	if(last_found){
+		contexts[num_patches] = get_context(bbox_last);
+		if(contexts[num_patches].x<0||contexts[num_patches].y<0||
+			contexts[num_patches].x+contexts[num_patches].width>frame.cols||
+			contexts[num_patches].y+contexts[num_patches].height>frame.rows){
+		}else{
+			patches[num_patches] = frame(contexts[num_patches]);
+			num_patches++;
+		}
+	}
+	for(int i=0;i<proposals.size();++i){
+		if(num_patches>=max_proposal_)break;
+		contexts[num_patches] = get_context(proposals[i], 0.6);
+		if(contexts[num_patches].x<0||contexts[num_patches].y<0||
+			contexts[num_patches].x+contexts[num_patches].width>frame.cols||
+			contexts[num_patches].y+contexts[num_patches].height>frame.rows){
+			continue;
+		}
+		if(last_found && proposal_range>0){
+			if(contexts[num_patches].x<bbox_last.x - proposal_range||
+				contexts[num_patches].x>bbox_last.x + proposal_range||
+				contexts[num_patches].y<bbox_last.y - proposal_range||
+				contexts[num_patches].y>bbox_last.y + proposal_range){
+				continue;
+			}
+		}
+		patches[num_patches] = frame(contexts[num_patches]);
+		num_patches++;
+		//input image to the network
+	}
+	return _track(num_patches, output_prob, output_bbox);
+}
+
 bool NNTracker::track(Mat &frame, Rect *proposals, int num_proposals, float *output_prob, Rect *output_bbox){
 
 	//we want to add the context from last frame to be a proposal..
 	//num_proposals = (num_proposals>max_proposal_-1)?max_proposal_-1:num_proposals;
 	int num_patches = 0;
 
-	if(bbox_last.width!=0){
+	if(last_found){
 		contexts[num_patches] = get_context(bbox_last);
 		if(contexts[num_patches].x<0||contexts[num_patches].y<0||
 			contexts[num_patches].x+contexts[num_patches].width>frame.cols||
@@ -78,13 +118,24 @@ bool NNTracker::track(Mat &frame, Rect *proposals, int num_proposals, float *out
 		if(contexts[num_patches].x<0||contexts[num_patches].y<0||
 			contexts[num_patches].x+contexts[num_patches].width>frame.cols||
 			contexts[num_patches].y+contexts[num_patches].height>frame.rows){
-		}else{
-			patches[num_patches] = frame(contexts[num_patches]);
-			num_patches++;
+			continue;
 		}
+		if(last_found && proposal_range>0){
+			if(contexts[num_patches].x<bbox_last.x - proposal_range||
+				contexts[num_patches].x>bbox_last.x + proposal_range||
+				contexts[num_patches].y<bbox_last.y - proposal_range||
+				contexts[num_patches].y>bbox_last.y + proposal_range){
+				continue;
+			}
+		}
+		patches[num_patches] = frame(contexts[num_patches]);
+		num_patches++;
 		//input image to the network
 	}
-	if(num_patches==0)return false;
+	if(num_patches==0){
+		last_found = false;
+		return false;
+	}
 
 	classifier.PredictN(patches, num_patches, probs, bboxes);
 
@@ -97,10 +148,15 @@ bool NNTracker::track(Mat &frame, Rect *proposals, int num_proposals, float *out
 			max_prob_idx = i;
 		}
 	}
+	if(max_prob < prob_thresh){
+		last_found = false;
+		return false;
+	}
 	Rect bbox_rect = get_bbox(bboxes[max_prob_idx], contexts[max_prob_idx]);
-	if(bbox_last.width==0){
+	if(!last_found){
 		//new target
 		bbox_last = bbox_rect;
+		last_found = true;
 	}else{
 		bbox_last = running_avg(bbox_last, bbox_rect);
 	}
@@ -108,4 +164,48 @@ bool NNTracker::track(Mat &frame, Rect *proposals, int num_proposals, float *out
 	*output_bbox = bbox_last;
 
 	return true;
+}
+
+bool NNTracker::_track(int num_patches, float *output_prob, Rect *output_bbox){
+
+	if(num_patches==0){
+		last_found = false;
+		return false;
+	}
+
+	classifier.PredictN(patches, num_patches, probs, bboxes);
+
+	//find the best one
+	float max_prob = 0;
+	int max_prob_idx = 0;
+	for(int i=0;i<num_patches;++i){
+		if(probs[i].at<float>(0,0)>max_prob){
+			max_prob = probs[i].at<float>(0,0);
+			max_prob_idx = i;
+		}
+	}
+	if(max_prob < prob_thresh){
+		last_found = false;
+		return false;
+	}
+	Rect bbox_rect = get_bbox(bboxes[max_prob_idx], contexts[max_prob_idx]);
+	if(!last_found){
+		//new target
+		bbox_last = bbox_rect;
+		last_found = true;
+	}else{
+		bbox_last = running_avg(bbox_last, bbox_rect);
+	}
+	*output_prob = max_prob;
+	*output_bbox = bbox_last;
+
+	return true;
+}
+
+void NNTracker::setProbThresh(float thresh){
+	prob_thresh = thresh;
+}
+
+void NNTracker::setProposalRange(int range){
+	proposal_range = range;
 }
