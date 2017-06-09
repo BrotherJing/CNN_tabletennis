@@ -6,12 +6,12 @@ And also Faster R-CNN([Faster R-CNN: Towards Real-Time Object Detection with Reg
 
 # Installation
 
-1. Clone this repo with the submodule, which is our fork from caffe.(TODO)
-```
+1. Clone this repo with the submodule, which is our fork from caffe.
+```bash
 git clone --recursive <this repo>
 ```
 2. `cd` to the customized caffe directory, install caffe using cmake, in order for our cpp interface to find the install path of caffe.
-```
+```bash
 cd caffe
 mkdir build
 cd build
@@ -20,9 +20,18 @@ make all
 make install
 make runtest
 ```
-3. Download our caffe model weights from...(TODO)
+3. Download our caffe model weights.
 
-4. Run the jupyter notebook, or the cpp interface(TODO)
+SO-CNN layer | Regression layer
+----|----
+[end2end_vgg_iter_20000.caffemodel](http://or9ajn83e.bkt.clouddn.com/tracking/end2end_vgg_iter_20000.caffemodel)|[end2end_regress_vgg_iter_12000.caffemodel](http://or9ajn83e.bkt.clouddn.com/tracking/end2end_regress_vgg_iter_12000.caffemodel)
+
+4. Run the jupyter notebook, or the cpp interface:
+```bash
+mkdir build && cd build
+cmake ..
+make
+```
 
 # Screenshots
 
@@ -38,4 +47,4 @@ regress a bounding box
 
 tracking
 
-![tracking](http://7xrcar.com1.z0.glb.clouddn.com/tracking.png)
+![tracking](http://7xrcar.com1.z0.glb.clouddn.com/track_vis.png)
