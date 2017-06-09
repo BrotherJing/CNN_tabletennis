@@ -16,8 +16,8 @@ $CAFFE_ROOT/tools/convert_imageset / $FILENAME_DIR/val.label.txt $OUTPUT_DIR/val
 
 echo "Creating bounding box label lmdb..."
 
-python scripts/gen_label.py --file=$FILENAME_DIR/train.bbox.txt --outname=$OUTPUT_DIR/train_bbox_lmdb
-python scripts/gen_label.py --file=$FILENAME_DIR/val.bbox.txt --outname=$OUTPUT_DIR/val_bbox_lmdb
+python scripts/gen_label.py --file=$FILENAME_DIR/train.bbox.txt --outname=$OUTPUT_DIR/train_regress_label_lmdb
+python scripts/gen_label.py --file=$FILENAME_DIR/val.bbox.txt --outname=$OUTPUT_DIR/val_regress_label_lmdb
 
 echo "Computing image mean..."
 

@@ -14,3 +14,9 @@ target_link_libraries(tracker ${OpenCV_LIBS} ${Caffe_LIBRARIES})
 
 add_executable(predict main.cpp Classifier.cpp NNTracker.cpp)
 target_link_libraries(predict ${OpenCV_LIBS} ${Caffe_LIBRARIES})
+
+add_executable(tracker_test tracker_test.cpp Classifier.cpp NNTracker.cpp)
+target_link_libraries(tracker_test ${OpenCV_LIBS} ${Caffe_LIBRARIES})
+
+add_executable(tracker_vis tracker_vis.cpp)
+target_link_libraries(tracker_vis ${OpenCV_LIBS})

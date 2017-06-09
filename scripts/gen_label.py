@@ -39,10 +39,11 @@ if __name__ == '__main__':
 
 	else:
 
-		data = pd.read_csv(filename, delimiter=' ')
+		data = pd.read_csv(filename, delimiter=' ', header=None)
 		arr = data.as_matrix()
 		data = None
 		N, D = arr.shape
+		print N,D
 
 		key = 0
 		env = lmdb.open(outname, map_size=arr.nbytes*10)
