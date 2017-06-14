@@ -32,6 +32,7 @@ mkdir build && cd build
 cmake ..
 make
 ```
+5. To create dataset and train model yourself, see the shell scripts in `scripts/`.
 
 # Screenshots
 

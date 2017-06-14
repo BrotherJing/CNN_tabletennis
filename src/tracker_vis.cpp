@@ -20,8 +20,8 @@ double SCALE = 0.5;
 using namespace std;
 using namespace cv;
 
-CvScalar colors[3] = {CV_RGB(0xff, 0x00, 0x00),CV_RGB(0xff, 0x00, 0xff),CV_RGB(0xff, 0xff, 0x00)};
-// 0:red 1:pink 2:yellow
+CvScalar colors[5] = {CV_RGB(0xff, 0x00, 0x00),CV_RGB(0xff, 0x00, 0xff),CV_RGB(0xff, 0xff, 0x00),CV_RGB(0x00,0x00,0xff),CV_RGB(0x00,0xff,0xff)};
+// 0:red 1:pink 2:yellow 3:blue 4:cyan
 
 int main(int argc, char **argv){
 	string video_path, ground_truth_path;
@@ -31,6 +31,7 @@ int main(int argc, char **argv){
 	for(int i=3;i<argc;++i){
 		predictions.push_back(string(argv[i]));
 	}
+	cout<<predictions.size()<<endl;
 	if(predictions.size()==0){
 		cout<<"no prediction file."<<endl;
 		return 0;

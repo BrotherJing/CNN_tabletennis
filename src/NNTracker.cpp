@@ -29,6 +29,10 @@ NNTracker::~NNTracker(){
 
 void NNTracker::setMaxProposals(int proposals){
 	max_proposal_ = proposals;
+	patches = new Mat[max_proposal_];
+	bboxes = new Mat[max_proposal_];
+	probs = new Mat[max_proposal_];
+	contexts = new Rect[max_proposal_];
 }
 
 void NNTracker::fail(){
@@ -120,8 +124,10 @@ void NNTracker::get_many_contexts(Mat &frame, Rect &bbox){
 	for(int i=0;i<2;++i){
 		for(int j=0;j<2;++j){
 			if(num_patches>=max_proposal_)break;
-			center_x = bbox.x - bbox.width/2 + i * bbox.width * 2;
-			center_y = bbox.y - bbox.height/2 + j * bbox.height * 2;
+			//center_x = bbox.x - bbox.width/2 + i * bbox.width * 2;
+			//center_y = bbox.y - bbox.height/2 + j * bbox.height * 2;
+			center_x = bbox.x + i * bbox.width;
+			center_y = bbox.y + j * bbox.height;
 			if(center_x<0||center_x>=frame.cols||
 				center_y<0||center_y>=frame.rows)continue;
 			context.x = center_x - bbox.width*3/2;
