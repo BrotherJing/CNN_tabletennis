@@ -32,6 +32,10 @@ mkdir build && cd build
 cmake ..
 make
 ```
+The `lib/` directory contains the python layers, add it to `PYTHONPATH` environment variable:
+```bash
+export PYTHONPATH=$PYTHONPATH:<this repo>/lib
+```
 5. To create dataset and train model yourself, see the shell scripts in `scripts/`.
 
 # Screenshots

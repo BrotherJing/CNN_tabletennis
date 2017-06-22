@@ -7,6 +7,7 @@ find_path(TRACKER_INCLUDE_DIR
 	
 include_directories(${TRACKER_INCLUDE_DIR})
 
+#IMPORTANT! Change this to your caffe's include directory
 include_directories(/home/jing/caffe/build_cmake2/include)
 
 add_library(tracker SHARED NNTracker.cpp Classifier.cpp)
