@@ -24,7 +24,7 @@ make runtest
 
 SO-CNN layer | Regression layer
 ----|----
-[end2end_vgg_iter_20000.caffemodel](http://or9ajn83e.bkt.clouddn.com/tracking/end2end_vgg_iter_20000.caffemodel)|[end2end_regress_vgg_iter_12000.caffemodel](http://or9ajn83e.bkt.clouddn.com/tracking/end2end_regress_vgg_iter_12000.caffemodel)
+[end2end_vgg_iter_20000.caffemodel](https://brotherjing-static.s3-ap-northeast-1.amazonaws.com/blob/end2end_vgg_iter_20000.caffemodel)|[end2end_regress_vgg_iter_12000.caffemodel](https://brotherjing-static.s3-ap-northeast-1.amazonaws.com/blob/end2end_regress_vgg_iter_12000.caffemodel)
 
 4. Run the jupyter notebook, or the cpp interface:
 ```bash
@@ -44,12 +44,12 @@ See more detail in the jupyter notebook :)
 
 output probability map
 
-![probability map](http://7xrcar.com1.z0.glb.clouddn.com/prob_map.png)
+![probability map](https://brotherjing-static.s3-ap-northeast-1.amazonaws.com/img/prob_map.png)
 
 regress a bounding box
 
-![bounding box](http://7xrcar.com1.z0.glb.clouddn.com/regression.png)
+![bounding box](https://brotherjing-static.s3-ap-northeast-1.amazonaws.com/img/regression.png)
 
 tracking
 
-![tracking](http://7xrcar.com1.z0.glb.clouddn.com/track_vis.png)
+![tracking](https://brotherjing-static.s3-ap-northeast-1.amazonaws.com/img/track_vis.png)
